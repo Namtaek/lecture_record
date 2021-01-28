@@ -1,0 +1,692 @@
+---
+title: "Homework"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+library(lattice)
+library(ggplot2)
+```
+# 통계계산입문 과제
+
+
+
+## Problem 1 : mammals 자료에 대하여
+#### **1 - 1 brain weight/body weight의 비율을 계산하여 새로운 변수로 자료에 추가**
+
+```{r}
+head(mammals)
+```
+```{r}
+ratio <- mammals$brain / mammals$body
+mammals$ratio <- ratio
+head(mammals)
+```
+#### **1 - 2 가능한 다양한 그래픽을 통하여 비율자료의 분포 특징을 보여주고**
+
+```{r}
+summary(mammals$ratio)
+```
+중앙값이 평균보다 낮으니, 왼쪽으로 치우친 그래프라는 것을 알 수 있다.
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(mammals$ratio, horizontal = T, main = "Ratio")
+stripchart(mammals$ratio, main = "Ratio")
+hist(mammals$ratio, main = "Ratio", xlab = "Ratio")
+hist(mammals$ratio, prob = T, main = "Ratio", xlab = "Ratio")
+lines(density(mammals$ratio), col = "blue", lty = 2, lwd = 2)
+par(mfrow = c(1, 1))
+```
+
+#### **1 - 3 folded fraction, folded root, folded log값을 계산하여 [2]를 반복**
+```{r}
+mammals$ratio <- mammals$ratio + 0.15 
+summary(mammals$ratio)
+```
+로그를 취했을때 음수가 나오지 않도록 최소값을 1이상으로 만들어준다.
+
+```{r}
+f <- log(mammals$ratio, base = 40) 
+summary(f)
+```
+로그를 취했을 때 값들이 (0, 1)에 위치하도록 `base = 40`을 설정
+
+```{r}
+ff <- f - (1 - f) 
+summary(ff)
+```
+값들을 (-1, 1)로 펼쳐줌
+
+```{r}
+froot <- sqrt(2 * f) - sqrt(2 * (1 - f))
+summary(froot)
+flog <- 1.15 * log10(f) - 1.15 * log10(1 - f)
+summary(flog)
+```
+Folded root와 Folded log 값도 0을 기준으로 최대한 대칭을 따르게 만들어주었다.
+
+이제 그래픽 과정을 반복한다.
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(f, horizontal = T, main = "Ratio")
+stripchart(f, main = "Ratio")
+hist(f, main = "Ratio", xlab = "Ratio")
+hist(f, prob = T, main = "Ratio", xlab = "Ratio")
+lines(density(f), col = "blue", lty = 2, lwd = 2)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(ff, horizontal = T, main = "Folded Fraction Ratio")
+stripchart(ff, main = "Folded Fraction Ratio")
+hist(ff, main = "Folded Fraction Ratio", xlab = "Ratio")
+hist(ff, prob = T, main = "Folded Fraction Ratio", xlab = "Folded Fraction Ratio")
+lines(density(ff), col = "blue", lty = 2, lwd = 2)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(froot, horizontal = T, main = "Folded Root Ratio")
+stripchart(froot, main = "Folded Root Ratio")
+hist(froot, main = "Folded Root Ratio", xlab = "Ratio")
+hist(froot, prob = T, main = "Folded Root Ratio", xlab = "Folded Root Ratio")
+lines(density(froot), col = "blue", lty = 2, lwd = 2)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(flog, horizontal = T, main = "Folded Log Ratio")
+stripchart(flog, main = "Folded Log Ratio")
+hist(flog, main = "Folded Log Ratio", xlab = "Ratio")
+hist(flog, prob = T, main = "Folded Log Ratio", xlab = "Folded Log Ratio", ylim = c(0, 0.6))
+lines(density(flog), col = "blue", lty = 2, lwd = 2)
+```
+
+
+#### **1 - 4 비율의 중앙값을 기준으로 큰 집단과 작은 집단으로 분리하는 범주형 변수의 추가**
+ifelse 함수를 활용하며 dataframe에 새로운 column 추가
+```{r}
+med <- median(mammals$ratio)
+mammals$size <-  ifelse(mammals$ratio >= med, "big", "small")
+head(mammals)
+```
+#### **1 - 5 두 집단으로 분리된 자료에 대하여 위의 [2] 및 [3]을 반복**
+
+subset 함수를 이용하여 그룹 나누기
+```{r}
+big <- subset(mammals, subset = (size == "big"))
+summary(big$ratio)
+sma <- subset(mammals, subset = (size == "small"))
+summary(sma$ratio)
+```
+
+[2]의 반복 for small group
+```{r}
+par(mfrow = c(2, 2))
+boxplot(sma$ratio, horizontal = T, main = "S.Ratio")
+stripchart(sma$ratio, main = "S.Ratio")
+hist(sma$ratio, main = "S.Ratio", xlab = "Ratio")
+hist(sma$ratio, prob = T, main = "S.Ratio", xlab = "S.Ratio")
+lines(density(sma$ratio), col = "blue", lty = 2, lwd = 2)
+```
+
+[2]의 반복 for big group
+```{r}
+par(mfrow = c(2, 2))
+boxplot(big$ratio, horizontal = T, main = "B.Ratio")
+stripchart(big$ratio, main = "B.Ratio")
+hist(big$ratio, main = "B.Ratio", xlab = "Ratio")
+hist(big$ratio, prob = T, main = "B.Ratio", xlab = "B.Ratio")
+lines(density(big$ratio), col = "blue", lty = 2, lwd = 2)
+```
+
+[3] 반복 for small group
+```{r}
+summary(sma$ratio)
+s <- log(sma$ratio, base = 6.8)
+summary(s)
+sf <- s - (1 - s)
+summary(sf)
+sroot <- sqrt(2 * s) - sqrt(2 * (1 - s))
+summary(sf)
+slog <- 1.15 * log10(s) - 1.15 * log10(1 - s)
+summary(slog)
+```
+
+small group에 대한 시각화
+```{r}
+par(mfrow = c(2, 2))
+boxplot(s, horizontal = T, main = "S.Ratio")
+stripchart(s, main = "S.Ratio")
+hist(s, main = "S.Ratio", xlab = "Ratio")
+hist(s, prob = T, main = "S.Ratio", xlab = "S.Ratio")
+lines(density(s), col = "blue", lty = 2, lwd = 2)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(sf, horizontal = T, main = "Folded S.Ratio")
+stripchart(sf, main = "Folded S.Ratio")
+hist(sf, main = "Folded S.Ratio", xlab = "Ratio")
+hist(sf, prob = T, main = "Folded S.Ratio", xlab = "Folded S.Ratio")
+lines(density(sf), col = "blue", lty = 2, lwd = 2)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(sroot, horizontal = T, main = "Folded Root S.Ratio")
+stripchart(sroot, main = "Folded S.Ratio")
+hist(sroot, main = "Folded Root S.Ratio", xlab = "Ratio")
+hist(sroot, prob = T, main = "Folded Root S.Ratio", xlab = "Folded Root S.Ratio")
+lines(density(sroot), col = "blue", lty = 2, lwd = 2)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(slog, horizontal = T, main = "Folded Log S.Ratio")
+stripchart(slog, main = "Folded Log S.Ratio")
+hist(slog, main = "Folded Log S.Ratio", xlab = "Ratio")
+hist(slog, prob = T, main = "Folded Log S.Ratio", xlab = "Folded Log S.Ratio")
+lines(density(slog), col = "blue", lty = 2, lwd = 2)
+```
+
+
+[3]의 반복 for big group
+```{r}
+big <- mammals[mammals$size == "big", ]
+summary(big$ratio)
+big$ratio <- big$ratio - 5.74
+summary(big$ratio)
+b <- log(big$ratio, base = 35)
+summary(b)
+bf <- b - (1 - b)
+summary(bf)
+broot <- sqrt(2 * b) - sqrt(2 * (1 - b))
+summary(broot)
+blog <- 1.15 * log10(b) - 1.15 * log10(1 - b)
+summary(blog)
+```
+
+big group에 대한 시각화
+```{r}
+par(mfrow = c(2, 2))
+boxplot(b, horizontal = T, main = "B.Ratio")
+stripchart(b, main = "B.Ratio")
+hist(b, main = "B.Ratio", xlab = "Ratio")
+hist(b, prob = T, main = "B.Ratio", xlab = "B.Ratio")
+lines(density(b), col = "blue", lty = 2, lwd = 2)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(bf, horizontal = T, main = "Folded B.Ratio")
+stripchart(bf, main = "Folded B.Ratio")
+hist(bf, main = "Folded B.Ratio", xlab = "Ratio")
+hist(bf, prob = T, main = "Folded B.Ratio",
+     xlab = "Folded B.Ratio")
+lines(density(bf), col = "blue", lty = 2, lwd = 2)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(broot, horizontal = T, main = "Folded Root B.Ratio")
+stripchart(broot, main = "Folded Root B.Ratio")
+hist(broot, main = "Folded Root B.Ratio", xlab = "Ratio")
+hist(broot, prob = T, main = "Folded Root B.Ratio", xlab = "Folded Root B.Ratio")
+lines(density(broot), col = "blue", lty = 2, lwd = 2)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+boxplot(blog, horizontal = T, main = "Folded Log B.Ratio")
+stripchart(blog, main = "Folded Log B.Ratio")
+hist(blog, main = "Folded Log B.Ratio", xlab = "Ratio")
+hist(blog, prob = T, main = "Folded Log B.Ratio", xlab = "Folded Log B.Ratio")
+lines(density(blog), col = "blue", lty = 2, lwd = 2)
+```
+
+#### **1 - 6 두 집단으로 분리된 각각의 집단별로 body weight와 brain weight간의 관계에 **
+####      **어떤 차이가 있는지에 대한 정보를 나타내는 그래프 및 분석을 실시**
+
+```{r}
+par(mfrow = c(2, 2))
+hist(s, prob = T, main = "S.Ratio", xlab = "S.Ratio")
+lines(density(s), col = "blue", lty = 2, lwd = 2)
+hist(b, prob = T, main = "B.Ratio", xlab = "B.Ratio")
+lines(density(b), col = "blue", lty = 2, lwd = 2)
+hist(slog, prob = T, main = "Folded Log S.Ratio", xlab = "Folded Log S.Ratio")
+lines(density(slog), col = "blue", lty = 2, lwd = 2)
+hist(blog, prob = T, main = "Folded Log B.Ratio", xlab = "Folded Log B.Ratio")
+lines(density(blog), col = "blue", lty = 2, lwd = 2)
+```
+ratio transformation의 분포를 보았을때는 정확히 어떤지 판단하기 쉽지않다. 
+ratio자체는 small group이나 big group이나 큰 틀에서 고르게 분포한다고 볼 수도 있지만, 정확히 말하기 어렵다.
+log ratio는 값들을 중앙으로 모아주는 성질때문에, 정규분포처럼 보이지만 적절한 결과를 도출하기 어렵다. 
+따라서 각 그룹의 brain weight와 body weight를 축으로 하는 그래프를 그리려한다.
+```{r}
+big.fit <- lm(log(big$brain)~log(big$body))
+plot(log(big$body), log(big$brain))
+abline(big.fit)
+```
+big group의 경우, 값들이 회귀선을 중심으로 고르게 퍼져있다는 점을 확인할 수 있고,
+둘 사이에 양의 상관관계를 확인할 수 있다.
+
+```{r}
+cor.test(log(big$body), log(big$brain))
+```
+이를 바탕으로 상관분석을 시행한 결과 상관계수는 0.978로, 두 변수는 매우 큰 상관도를 지닌다.
+```{r}
+sma.fit <- lm(log(sma$brain)~log(sma$body))
+plot(log(sma$body), log(sma$brain))
+abline(sma.fit)
+
+```
+small group도 big group과 마찬가지로 회귀선을 중심으로 고르게 분포되어 있다.
+하지만 중간에 공백이 있는것으로 보아, 두 그룹보다는 세 그룹으로 나누는 것을 생각해봐야 할 수도 있겠다.
+
+```{r}
+cor.test(log(sma$body), log(sma$brain))
+```
+small group도 상관계수가 0.982로 매우 높다
+
+##### **body weight와 brain weight는 매우 큰 양의 상관관계를 지닌다.**
+
+```{r, echo = F}
+rm(list = ls())
+```
+
+## Problem 2 
+#### **Exercise 1.14 (Tearing factor of paper)**
+```{r}
+tf <- read.table("tearingfactor.txt", header = T)
+summary(tf)
+```
+
+## Problem 3 
+####**Exercise 2.14 and 2.15 (clustering and grouping)**
+
+**for 2.14 mammals cluster**
+```{r}
+head(mammals)
+summary(mammals)
+```
+
+```{r}
+d <- dist(log(mammals))
+h <- hclust(d, method = "ward.D2")
+plot(h)
+```
+
+```{r}
+h <- hclust(d, method = "complete")
+plot(h)
+```
+
+**for 2.15 identifying groups or cluster**
+
+```{r}
+big <- subset(mammals, subset = (body > median(body)))
+```
+
+```{r}
+d <- dist(big)
+h <- hclust(d, method = "complete")
+plot(h)
+```
+**Display label of each observation**
+
+```{r} 
+g <- cutree(h,5)
+labels(g)
+```
+
+
+**summarize group size**
+```{r}
+table(g)       
+```
+
+```{r}
+big[g > 2, ]
+```
+
+## Problem 4
+#### **Exercise 3.3 (Does baseball hitting data follow a binomial distribution?)**
+
+**for 3.3 Does baseball hitting data follow a binomial distribution**
+(1)
+```{r}
+k <- 0 : 4
+p <- dbinom(k, 4, 0.312)
+binom <- round(70 * p)
+binom
+names(binom) = k
+binom
+```
+
+```{r}
+pujols <- c(17, 31, 17, 5)
+pujols
+prob <- c(p[1:3], 1 - sum(p[1:3]))
+prob
+```
+
+```{r}
+chisq.test(pujols, p = prob)
+```
+H0는 차이가 없다는 것인데, 이를 기각할 수 없다.
+
+(2)
+```{r}
+k <- 0 : 5
+p <- dbinom(k, 5, 0.312)
+binom <- round(25 * p)
+binom
+names(binom) = k
+binom
+```
+
+```{r}
+pujols <- c(5, 5, 4, 11)
+pujols
+sum(p[1:3])
+prob <- c(p[1:3], 1 - sum(p[1:3]))
+prob
+```
+
+```{r}
+chisq.test(pujols, p = prob)
+```
+pvalue가 매우 낮기때문에, 푸홀스의 타율과 이항분포의 확률에는 차이가 있다.
+
+
+## Problem 5 
+#### **Exercise 4.1 and 4.2 (Speed and stopping distance)**
+
+##### **4.1 (Speed and stopping distance).**
+ 
+**a** Use the plot function to construct a scatterplot of speed (horizontal)
+against dist (vertical).
+```{r}
+plot(cars$speed, cars$dist)
+```
+
+**b** Revise the basic plot by labeling the horizontal axis with “Speed (mpg)”
+and the vertical axis with “Stopping Distance (ft),” Add a meaningful title
+to the plot.
+```{r}
+plot(cars$speed, cars$dist, xlab = "Speed (mpg)", ylab = "Stopping Distance (ft)",
+     main = "Stoppong Distance for Speed")
+```
+
+**c** Revise the plot by changing the plot symbol from the default open circles
+to red filled triangles (col="red", pch=17).
+```{r}
+plot(cars$speed, cars$dist, xlab = "Speed (mpg)", ylab = "Stopping Distance (ft)",
+     main = "Stoppong Distance for Speed", col = "red", pch = 17)
+```
+
+#### **4.2 (Speed and stopping distance (continued)).**
+
+```{r}
+fit.linear = lm(dist ~ speed, data=cars)
+fit.linear
+fit.quadratic = lm(dist ~ speed + I(speed^2), data=cars)
+fit.quadratic
+```
+**a.** Construct a scatterplot of speed and stopping distance.
+```{r}
+plot(cars$speed, cars$dis, xlab = "Speed (mpg)", ylab = "Stopping Distance (ft)",
+     main = "Stoppong Distance for Speed", col = "red", pch = 17)
+```
+
+**b.** Using the abline function with argument fit.linear, overlay the best
+line fit using line type “dotted” and using a line width of 2.
+```{r}
+plot(cars$speed, cars$dist, xlab = "Speed (mpg)", ylab = "Stopping Distance (ft)",
+     main = "Stoppong Distance for Speed", col = "red", pch = 17)
+abline(fit.linear)
+```
+
+**c.** Using the lines function, overlay the quadratic fit using line type “longdash”
+and a line width of 2.
+```{r}
+attach(cars)
+fit.quadratic
+plot(cars$speed, cars$dist, xlab = "Speed (mpg)", ylab = "Stopping Distance (ft)",
+     main = "Stoppong Distance for Speed", col = "red", pch = 17)
+abline(fit.linear)
+lines(speed, fit.quadratic$fitted.values, lty = 5 ,lwd = 2)
+```
+
+**d.** Use a legend to show the line types of the linear and quadratic fits.
+```{r}
+plot(cars$speed, cars$dist, xlab = "Speed (mpg)", ylab = "Stopping Distance (ft)",
+     main = "Stoppong Distance for Speed", col = "red", pch = 17)
+abline(fit.linear)
+lines(speed, fit.quadratic$fitted.values, lty = 5 ,lwd = 2)
+legend("topleft", legend = c("linear", "quadratic"), lty = c(1, 5), lwd = c(1, 2))
+```
+
+**e.** Redo parts (a) - (d) using two contrasting colors (say red and blue) for
+the two different fits.
+```{r}
+plot(cars$speed, cars$dist,xlab = "Speed (mpg)", ylab = "Stopping Distance (ft)",
+     main = "Stoppong Distance for Speed", col = "red", pch = 17)
+abline(fit.linear, col = "red")
+lines(speed, fit.quadratic$fitted.values, lty = 5 ,lwd = 2, col = 'blue')
+legend("topleft", legend = c("linear", "quadratic"), lty = c(1, 5), lwd = c(1, 2), col = c("red", "blue"))
+```
+
+```{r}
+detach(cars)
+```
+
+
+## Problem 6
+6. 아래 제시된 내용을 모두 수행하는 R 함수 (function)을 작성하고 임의로 선택된
+    k개 점들에 대하여 수행한 결과를 프로그램소스와 함께 정리하여 제출하시오.
+   [1] 함수의 인수는 k (자연수)
+   [1] 적당한 수평축과 수직축의 범위를 갖는 새로운 플롯창을 오픈
+   [2] 임의의 k개 점을 선택하여 좌표를 저장
+   [3] 선택된 k개의 좌표에 적당한 point character를 사용하여 표시
+   [4] k개의 점을 시작점에서 시작하여 끝점까지 화살표로 연결
+   [5] 플롯창에 테두리를 추가
+   
+**locator 함수를 이용해서, 좌표에 점을 찍을수 있다.**
+함수의 정의는 다음과 같다.
+```{r, eval = FALSE}
+gbl = function(k){
+  plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "",
+       xlim = c(0, 1), ylim = c(0, 1))
+  coord = locator(k, type = "p", pch = 16)
+  for(n in 1 : (k - 1)) {
+    arrows(coord$x[1], coord$y[1], coord$x[n + 1],  coord$y[n + 1], 
+           length = 0.15)
+  }
+}
+gbl(5)  
+```
+하지만 이는 R markdown에선 실행이 안되기때문에, 코드만 작성했다.
+이와 유사하게 locator 함수 없이 runif함수를 통해 좌표를 생성하겠다.
+
+
+
+```{r}
+gbl = function(k){
+        plot(NULL, xaxt = "n", yaxt = "n", bty = "n", ylab = "", xlab = "",
+             xlim = c(0, 1), ylim = c(0, 1))
+        xcor = runif(k, 0, 1)
+        ycor = runif(k, 0, 1)
+        coord = cbind(xcor, ycor)
+        points(coord, cex = 2, pch = 16, col = "gray")
+        n = 1
+        while (n < k){
+                arrows(coord[n, 1], coord[n, 2], coord[n + 1, 1], coord[n + 1, 2], length = 0.15)
+                n = n + 1
+        }
+        box()
+}
+```
+
+```{r}
+gbl(10)
+```
+이와 같이 생성이 가능하다. 
+
+
+
+## Problem 7. 
+Website counts 자료(10.4절 및 10.5절)에 대한 permutation test의 내용 중
+correlation의 분포를 이용하는 부분을 correlation test를 이용하는 내용에 적합하도록
+교재의 해당 프로그램들을 모두 수정하고 각자 작성한 프로그램과 결과를 정리하여 
+제출하시오.
+```{r, echo = FALSE}
+web = read.table("webhits.txt", header = T)
+```
+
+**책에 주어진 permutation test 내용**
+```{r, eval = FALSE}
+rand.correlation = function(x, y, R=199) {
+  ranks.x = rank(x)
+  ranks.y = rank(y)
+  observed.r = cor(ranks.x, ranks.y)
+  stats = replicate(R, {
+    random.ranks = sample(ranks.y)
+    cor(ranks.x, random.ranks)
+  })
+  p.value = sum(stats >= observed.r) / (R + 1)
+  list(observed.r = observed.r, p.value = p.value)
+}
+
+```
+`cor(rank.x, rank.y)`와 같은 부분을, `cor.test`로 바꿔야한다.
+하지만 이때 `cor.test`를 할 경우, pearson correlation test로 진행된다.
+permutatatin test는 비모수적 방법이기때문에, pearson방법 말고 spearman rank correlation을 이용해야한다.
+또한 이때 tie들로 인해, 정확한 확률이 구해지지 않는다는 경고메시지가 발생하는데, 
+`exact = F`를 추가해주면 이를 억제할 수 있다.
+
+```{r}
+rand.correlation4 = function(x, y, R=199) {
+  ranks.x = rank(x)
+  ranks.y = rank(y)
+  observed.r = cor.test(ranks.x, ranks.y, method = "spearman", exact = F)$estimate
+  stats = replicate(R, {
+    random.ranks = sample(ranks.y)
+    cor.test(ranks.x, random.ranks, method = "spearman", exact = F)$estimate
+  })
+  p.value = sum(stats >= observed.r) / (R + 1)
+  list(observed.r = observed.r, p.value = p.value)
+}
+```
+
+```{r}
+rand.correlation4(web$Week, web$Hits, R=100000)
+```
+p-value는 0.0965로, 유의수준이 0.05였다면 rho = 0 이라는 귀무가설을 기각한다.
+
+
+
+## Problem 8.
+
+#### A coin-tossing game (11.2절)의 내용을 수정하여 Peter가 60불을 가지고 있고 Paul은
+#### 40불을 가지고 있으며 게임의 룰은 두 사람 중 한 사람의 돈이 처음으로 0이 되는 시점
+#### 에 끝나는 것으로 할 때
+
+
+**[1] Peter가 이길 확률**
+```{r}
+p.peter.win = function(peter=60){
+  repeat
+  {
+    peter = peter + sample(c(-1, 1), 1)
+    if (peter == 100){
+      return("Win")
+      break}
+    if (peter == 0){
+      return("Lose")
+      break}
+  }
+}
+p.peter.win()
+```
+피터가 이기는 경우는 "Win"를 반환하고, 지는경우 "Lose"를 반환하는 함수를 작성
+```{r}
+n.win = replicate(1000, p.peter.win())
+```
+이 과정을 1000번 반복했다
+
+```{r}
+a = prop.table(table(n.win))
+a["Win"]
+```
+직관적으로 0.60 정도가 나올것 같았고,
+시뮬레이션 결과 0.569가 나왔다.
+
+
+**[2] 게임이 끝날 때 까지의 평균시간(동전을 던지는 횟수)**
+```{r}
+n.game = function(peter = 60){
+  n=0
+  while (peter > 0 & peter < 100)
+  {
+  peter = peter + sample(c(-1, 1), 1)
+  n = n + 1
+  }
+  return(n)
+}
+```
+게임이 끝날 때 까지의 횟수를 계산하는 함수를 만들었다.
+```{r}
+mean(replicate(1000, n.game()))
+```
+이를 1000번 반복해서 평균을 구한 결과,
+2400.836이 나왔다.
+평균적으로 2400번 정도에서 게임은 종료될 것이다.
+
+## Problem 9
+
+#### **Exercise 11.2(Checking hats)**
+
+
+**a** 
+Modify the function `scramble.hats` to compute the number of correct
+matches in this setting. (The only change is the definition of the vector
+hats – if one represents a black hat and a grey hat by 1 and 2, respectively,
+then hats consists of ten 1’s and ten 2’s.)
+```{r}
+scramble.hats = function() {
+  hats = rep(c(1, 2), each = 10)
+  mixed.hats <- sample(hats)
+  correct <- sum(hats == mixed.hats)
+  return(correct)
+}
+```
+몇 명이 바르게 쓰고 나가는지를 계산하는 함수를 작성했다.
+```{r}
+scramble.hats()
+```
+
+**b**
+Using the function `replicate`, repeat this simulation for 1000 trials. Store
+the number of matches for the 1000 experiments in the vector matches.
+```{r}
+matches <- replicate(1000, scramble.hats())
+```
+이를 1000번 반복했다.
+
+
+**c** 
+From the simulated values, approximate the probability that 10 or more
+men receive the correct hats. Also, find the expected number of correct
+matches.
+```{r}
+sum(matches >= 10) / length(matches) #approximate probability
+mean(matches) #expected number of correct matches
+```
+같은 모자를 찾아갈 확률은 0.681로 계산이 되고,
+평균적으로 같은 모자를 가져가는 사람의 수는 10.032이다.
